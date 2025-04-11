@@ -1,8 +1,8 @@
 CONFIG = {
-    #"DATA_PATH":"/home/cblasco/project_dat255_DL/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",
-    "DATA_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5", #/Users/carlamiquelblasco/Desktop/MASTER BERGEN v2/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",  # Path to dataset
+    "DATA_PATH":"/home/cblasco/project_dat255_DL/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",
+    #"DATA_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5", #/Users/carlamiquelblasco/Desktop/MASTER BERGEN v2/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",  # Path to dataset
     "MODEL_TYPE": "vae",  # Change to "cnn" or "rnn" to try different models
-    "MODE": "train",
+    "MODE": "test",
     #"CHUNK_SIZE": 20000,
     #"NUM_CHUNKS": 20,
     "PATIENCE": 5,
@@ -35,7 +35,7 @@ CONFIG = {
             "latent_dim_step": 32, # Optuna
             "decoder_layers": [128, 256],# [128, 256], [128, 256, 512]],  # Decoder hidden layers
             "activation": "relu",
-            "beta": 0.01,  # default weight for KL divergence loss
+            "beta": 0.0001,  # default weight for KL divergence loss
             "beta_min": 0.1, # Optuna 
             "beta_max": 2.0, # Optuna
             "dropout_rate": 0.1,
