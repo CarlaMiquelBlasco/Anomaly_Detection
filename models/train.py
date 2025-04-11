@@ -1,0 +1,189 @@
+import time
+import numpy as np
+import tensorflow as tf
+from config import CONFIG
+from utils.file_utils import *
+from utils.visualization import setup_tensorboard
+from optuna.integration import TFKerasPruningCallback
+from utils.beta_scheduler import BetaWarmupScheduler
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.optimizers.schedules import ExponentialDecay
+from tensorflow.keras.callbacks import LearningRateScheduler
+
+
+
+class AutoencoderTrainer:
+    """
+    Handles training and evaluation of an autoencoder model for anomaly detection.
+    """
+
+    def __init__(self, model, learning_rate):
+        self.model = model
+        self.model_type = CONFIG["MODEL_TYPE"]
+        self.learning_rate = learning_rate if learning_rate else CONFIG["LEARNING_RATE"]
+
+    def train(self, train_dataset, val_dataset, steps_per_epoch, trial=None):
+        """
+        Trains the model on background-only data and monitors validation loss.
+        Applies early stopping and saves the best model overall.
+
+        Parameters:
+        - train_dataset: tf.data.Dataset
+        - val_dataset: tf.data.Dataset
+        - steps_per_epoch: int, number of batches per epoch
+        - trial: Optional Optuna trial
+        """
+        print(f"[INFO] Starting training for model type: {self.model_type.upper()}")
+
+        start_time = time.time()
+
+        # Compile model
+        # === Define decaying learning rate schedule ===
+        lr_schedule = ExponentialDecay(
+            initial_learning_rate=self.learning_rate,
+            decay_steps=10000,  # Decay after N steps
+            decay_rate=0.96,  # Multiply LR by this factor
+            staircase=True  # If True: discrete steps; False: smooth decay
+        )
+
+        optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule, clipnorm=1.0)
+        #optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate, clipnorm=1.0)
+        if self.model_type == "vae":
+            self.model.compile(optimizer=optimizer)
+        elif self.model_type == "cnn":
+            self.model.compile(optimizer=optimizer, loss=custom_loss)
+        else:
+            self.model.compile(optimizer=optimizer, loss="mse")
+
+        # Callbacks
+        callbacks = [setup_tensorboard()]
+
+        # Checkpoint (global best)
+        checkpoint_path = os.path.join(CONFIG["MODEL_PATH"], "model.keras")
+        # os.makedirs(CONFIG["MODEL_PATH"], exist_ok=True)
+
+        checkpoint_cb = ModelCheckpoint(
+            checkpoint_path,
+            monitor="val_loss",
+            save_best_only=True,
+            save_weights_only=False,
+            verbose=1,
+            mode="min"
+        )
+        callbacks.append(checkpoint_cb)
+
+        # Early stopping
+        early_stop_cb = EarlyStopping(
+            monitor="val_loss",
+            patience=CONFIG.get("PATIENCE", 5),
+            restore_best_weights=True,
+            verbose=1,
+            mode = "min"
+        )
+        callbacks.append(early_stop_cb)
+
+        # Learning rate decay:
+        callbacks.append(LearningRateScheduler(lr_log))
+
+        if self.model_type=="vae":
+            # Increasing beta gradually
+            beta_cb = BetaWarmupScheduler(self.model, max_beta=self.model.beta, warmup_epochs=5)
+            callbacks.append(beta_cb)
+
+        # Optuna pruning (optional)
+        if trial:
+            callbacks.append(TFKerasPruningCallback(trial, 'val_loss'))
+
+        # Train model
+        wrapped_train_dataset = train_dataset.map(lambda x, mask: ((x, mask), x)) # specify input,mask, target so the model doesn't confuse mask with target
+        wrapped_val_dataset = val_dataset.map(lambda x, mask: ((x, mask), x))
+        history = self.model.fit(
+            wrapped_train_dataset,
+            validation_data=wrapped_val_dataset,
+            epochs=CONFIG["EPOCHS"],
+            steps_per_epoch=steps_per_epoch,
+            callbacks=callbacks
+        )
+
+        # Check for NaNs in training loss
+        losses = history.history.get("loss", [])
+        if any(np.isnan(loss) for loss in losses):
+            print("[ERROR - DEBUG] Detected NaN in training loss!")
+
+        elapsed = time.time() - start_time
+        print(f"[INFO] Training completed in {time.strftime('%H:%M:%S', time.gmtime(elapsed))}")
+        return history
+
+    def evaluate(self, dataset, labels=None, model_path=None):
+        """
+        Evaluates the model on a dataset and computes reconstruction error and predictions.
+
+        Parameters:
+        - dataset: tf.data.Dataset
+        - labels: Optional ground-truth labels
+        - model_path: Path to save the threshold
+
+        Returns:
+        - errors, threshold, predictions
+        """
+        print("[INFO] Evaluating model...")
+
+        all_errors = []
+        all_labels = []
+
+        for batch_data in dataset:
+            if isinstance(batch_data, tuple):
+                batch, batch_labels = batch_data
+                all_labels.append(batch_labels.numpy())
+            else:
+                batch = batch_data
+                batch_labels = None
+
+            batch = tf.cast(batch, tf.float32)
+
+            if self.model_type == "cnn":
+                batch = tf.expand_dims(batch, axis=-1)
+
+            reconstructed = self.model(batch, training=False)
+            reconstructed = tf.cast(reconstructed, tf.float32)
+
+            if tf.reduce_any(tf.math.is_nan(reconstructed)):
+                print("[WARNING] NaNs in output. Replacing with zeros.")
+                reconstructed = tf.where(tf.math.is_nan(reconstructed), tf.zeros_like(reconstructed), reconstructed)
+
+            if self.model_type == "cnn":
+                errors = tf.reduce_mean(tf.square(batch - reconstructed), axis=(1, 2, 3))
+            else:
+                errors = tf.reduce_mean(tf.square(batch - reconstructed), axis=(1, 2))
+
+            if tf.reduce_any(tf.math.is_nan(errors)):
+                print("[WARNING] NaNs in error. Replacing with inf.")
+                errors = tf.where(tf.math.is_nan(errors), tf.constant(np.inf, dtype=errors.dtype), errors)
+
+            all_errors.append(errors.numpy())
+
+        errors = np.concatenate(all_errors)
+        threshold = np.percentile(errors, CONFIG["THRESHOLD_PERCENTILE"])
+
+        if model_path:
+            threshold_path = os.path.join(model_path, "threshold.txt")
+            with open(threshold_path, "w") as f:
+                f.write(str(threshold))
+            print(f"[INFO] Threshold ({threshold:.6f}) saved to: {threshold_path}")
+        else:
+            print(f"[INFO] Threshold (percentile {CONFIG['THRESHOLD_PERCENTILE']}): {threshold:.6f}")
+
+        predictions = None
+        if labels is not None:
+            predictions = (errors > threshold).astype(int)
+            accuracy = np.mean(predictions == labels)
+            print(f"[INFO] Accuracy: {accuracy:.4f}")
+        elif all_labels:
+            labels = np.concatenate(all_labels)
+            predictions = (errors > threshold).astype(int)
+            accuracy = np.mean(predictions == labels)
+            print(f"[INFO] Accuracy: {accuracy:.4f}")
+        else:
+            print("[INFO] No labels provided. Skipping accuracy.")
+
+        return errors, threshold, predictions

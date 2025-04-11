@@ -1,0 +1,12 @@
+argparse
+pandas
+numpy
+hdf5plugin
+h5py
+scikit-learn
+tensorflow
+matplotlib
+seaborn
+optuna
+optuna-integration[tfkeras]
+tensorboard
