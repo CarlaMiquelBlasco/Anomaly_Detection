@@ -41,7 +41,7 @@ class AutoencoderTrainer:
         # === Define decaying learning rate schedule ===
         lr_schedule = ExponentialDecay(
             initial_learning_rate=self.learning_rate,
-            decay_steps=10000,  # Decay after N steps
+            decay_steps=100000,  # Decay after N steps
             decay_rate=0.96,  # Multiply LR by this factor
             staircase=True  # If True: discrete steps; False: smooth decay
         )
@@ -83,7 +83,7 @@ class AutoencoderTrainer:
         callbacks.append(early_stop_cb)
 
         # Learning rate decay:
-        callbacks.append(LearningRateScheduler(lr_log))
+        #callbacks.append(LearningRateScheduler(lr_log))
 
         if self.model_type=="vae":
             # Increasing beta gradually
@@ -112,7 +112,26 @@ class AutoencoderTrainer:
 
         elapsed = time.time() - start_time
         print(f"[INFO] Training completed in {time.strftime('%H:%M:%S', time.gmtime(elapsed))}")
-        return history
+
+        # === Compute and save threshold on validation set ===
+        errors_val = []
+        for x_val, mask_val in val_dataset:
+            x_val = tf.cast(x_val, tf.float32)
+            mask_val = tf.cast(mask_val, tf.float32)
+
+            z_mean, z_log_var, _ = self.model.encoder(x_val, training=False)
+            reconstructed = self.model.decoder(z_mean, training=False)
+
+            per_event_errors = vae_loss(x_val, reconstructed, z_mean, z_log_var,
+                                        beta=self.model.beta, mask=mask_val,
+                                        return_only_errors=True)
+
+            errors_val.append(per_event_errors.numpy())
+
+        errors_val = np.concatenate(errors_val)
+        threshold = np.percentile(errors_val, CONFIG["THRESHOLD_PERCENTILE"])
+
+        return history, threshold
 
     def evaluate(self, dataset, labels=None, model_path=None):
         """

@@ -38,18 +38,18 @@ class VariationalAutoencoder(Model):
     def _build_encoder(self):
         inputs = Input(shape=self.input_shape, name="encoder_input") # Input: shape = (700, 3)
         # OPTION 1 AND 2
-        #x = inputs
+        x = inputs
         # OPTION 3:
-        x = Flatten()(inputs)
+        #x = Flatten()(inputs)
         for units in self.encoder_layers: # Conv1D + BatchNorm + Dropout
             dropout_rate = self.dropout_rate
             l2_strength = self.l2_strength
             # OPTION 1:
-            #x = Conv1D(filters=units, kernel_size=1, activation="relu",kernel_regularizer=l2(l2_strength))(x)
+            x = Conv1D(filters=units, kernel_size=1, activation="relu",kernel_regularizer=l2(l2_strength))(x)
             # OPTION 2:
             #x = TimeDistributed(Dense(units, activation="relu", kernel_regularizer=l2(l2_strength)))(x)
             # OPTION 3:
-            x = Dense(units, activation="relu", kernel_regularizer=l2(self.l2_strength))(x)
+            #x = Dense(units, activation="relu", kernel_regularizer=l2(self.l2_strength))(x)
             x = BatchNormalization()(x)
             x = Dropout(dropout_rate)(x)
 
@@ -70,7 +70,7 @@ class VariationalAutoencoder(Model):
             #x = Dropout(self.dropout_rate)(x)
 
         output_dim = self.input_shape[0] * self.input_shape[1]
-        x = Dense(output_dim, activation="sigmoid")(x)
+        x = Dense(output_dim, activation="tanh")(x) #or sigmoid, but since we use standardscaler for pt is better tanh
         outputs = Reshape(self.input_shape)(x)
 
         return Model(latent_inputs, outputs, name="decoder")

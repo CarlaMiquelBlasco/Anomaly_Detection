@@ -94,7 +94,6 @@ def sampling(args):
 
 # VAE loss function defined outside the class for modularity
 @tf.keras.utils.register_keras_serializable(package="CustomModels") # Allows the model to be saved/loaded correctly and Makes it serializable within TensorFlow's model saving system
-@tf.keras.utils.register_keras_serializable(package="CustomModels")
 def vae_loss(inputs, outputs, z_mean, z_log_var, beta, mask=None):
     """
     Computes the VAE loss: weighted reconstruction + KL divergence.
@@ -108,7 +107,7 @@ def vae_loss(inputs, outputs, z_mean, z_log_var, beta, mask=None):
         print("[DEBUG] Mask provided and used")
 
     # === Feature-wise weights: [pT, eta, phi]
-    feature_weights = tf.constant([3.0, 1.0, 1.0], dtype=tf.float32)  # Adjust pT weight here
+    feature_weights = tf.constant(CONFIG["FEATURE_WEIGHTS"], dtype=tf.float32)  # Adjust pT weight here
     feature_weights = tf.reshape(feature_weights, (1, 1, 3))  # Shape: (1, 1, 3) to broadcast
 
     # === Reconstruction loss (weighted & masked MSE)

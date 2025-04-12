@@ -1,6 +1,6 @@
 CONFIG = {
-    "DATA_PATH":"/home/cblasco/project_dat255_DL/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",
-    #"DATA_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5", #/Users/carlamiquelblasco/Desktop/MASTER BERGEN v2/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",  # Path to dataset
+    #"DATA_PATH":"/home/cblasco/project_dat255_DL/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",
+    "DATA_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5", #/Users/carlamiquelblasco/Desktop/MASTER BERGEN v2/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",  # Path to dataset
     "MODEL_TYPE": "vae",  # Change to "cnn" or "rnn" to try different models
     "MODE": "test",
     #"CHUNK_SIZE": 20000,
@@ -20,8 +20,9 @@ CONFIG = {
     "LEARNING_RATE_MAX": 0.01,  # Maximum learning rate for Optuna
     "CHECKPOINT_DIR": "./saved_models/checkpoints/",
     "FINAL_MODEL_DIR": "./saved_models/final/",
-    "MODEL_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/saved_models/11042025",
+    "MODEL_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/project_carla/VAE_Anomalie/saved_models/12042025",
     "THRESHOLD_PERCENTILE": 95,  # Used for anomaly detection
+    "FEATURE_WEIGHTS":[3.0, 1.0, 1.0], # Feature-wise weights: [pT, eta, phi]
 
     # Several options means Optuna will search for the best hyperparameters 
     # If not using Optuna, the first value in each list will be used

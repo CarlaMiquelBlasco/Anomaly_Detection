@@ -104,12 +104,16 @@ class DataLoader:
             #self.load_scalers(CONFIG["MODEL_PATH"])
             self.load_scalers(CONFIG["MODEL_PATH"])
 
-
-        # === DEBUG: Print scaler stats
         print("\n[DEBUG] Fitted scaler stats:")
         for i, name in enumerate(['pT', 'η', 'φ']):
-            print(f"  {name}: min={self.scalers[i].data_min_[0]:.4f}, max={self.scalers[i].data_max_[0]:.4f}, "
-                  f"range={self.scalers[i].data_range_[0]:.4f}")
+            scaler = self.scalers[i]
+            if isinstance(scaler, MinMaxScaler):
+                print(f"  {name}: min={scaler.data_min_[0]:.4f}, max={scaler.data_max_[0]:.4f}, "
+                      f"range={scaler.data_range_[0]:.4f}")
+            elif isinstance(scaler, StandardScaler):
+                print(f"  {name}: mean={scaler.mean_[0]:.4f}, std={scaler.scale_[0]:.4f}")
+            else:
+                print(f"  {name}: Unknown scaler type")
 
         # DEBUG: Print raw vs scaled values from one example
         with h5py.File(self.data_path, "r") as f:

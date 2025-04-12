@@ -75,7 +75,7 @@ def objective(trial):
     trainer = AutoencoderTrainer(autoencoder, learning_rate=learning_rate)
 
     # === Train model ===
-    history = trainer.train(
+    history, threshold = trainer.train(
         train_dataset=train_dataset,
         val_dataset=val_dataset,
         steps_per_epoch=steps_per_epoch,
@@ -88,5 +88,11 @@ def objective(trial):
     with open(history_path, "wb") as f:
         pickle.dump(history.history, f)
     print(f"[INFO] Training history saved to {history_path}")
+
+    # === Save threshold ===
+    threshold_path = os.path.join(CONFIG["MODEL_PATH"], "threshold.txt")
+    with open(threshold_path, "w") as f:
+        f.write(str(threshold))
+    print(f"[INFO] Threshold fitted on validation set: {threshold:.6f}")
 
     return min(history.history["val_loss"])
