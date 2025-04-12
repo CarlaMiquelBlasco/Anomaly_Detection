@@ -93,11 +93,11 @@ def sampling(args):
 
 
 # VAE loss function defined outside the class for modularity
-@tf.keras.utils.register_keras_serializable(package="CustomModels") # Allows the model to be saved/loaded correctly and Makes it serializable within TensorFlow's model saving system
-def vae_loss(inputs, outputs, z_mean, z_log_var, beta, mask=None):
+@tf.keras.utils.register_keras_serializable(package="CustomModels")
+def vae_loss(inputs, outputs, z_mean, z_log_var, beta, mask=None, return_only_errors=False):
     """
     Computes the VAE loss: weighted reconstruction + KL divergence.
-    Applies a mask to ignore padded particles if provided.
+    Optionally returns only per-event reconstruction errors (for threshold computation).
     """
 
     if mask is None:
@@ -106,26 +106,32 @@ def vae_loss(inputs, outputs, z_mean, z_log_var, beta, mask=None):
     else:
         print("[DEBUG] Mask provided and used")
 
-    # === Feature-wise weights: [pT, eta, phi]
-    feature_weights = tf.constant(CONFIG["FEATURE_WEIGHTS"], dtype=tf.float32)  # Adjust pT weight here
-    feature_weights = tf.reshape(feature_weights, (1, 1, 3))  # Shape: (1, 1, 3) to broadcast
+    # Feature-wise weights: [pT, eta, phi]
+    feature_weights = tf.constant(CONFIG["FEATURE_WEIGHTS"], dtype=tf.float32)
+    feature_weights = tf.reshape(feature_weights, (1, 1, 3))  # shape (1, 1, 3) for broadcasting
 
-    # === Reconstruction loss (weighted & masked MSE)
+    # === Reconstruction loss
     squared_error = tf.square(inputs - outputs)
     weighted_error = squared_error * feature_weights
-    masked_error = weighted_error * mask  # mask has shape (batch, 700, 1)
+    masked_error = weighted_error * mask
 
-    # Normalize error per sample
+    # Compute per-sample reconstruction error
     per_event_error = tf.reduce_sum(masked_error, axis=(1, 2)) / (tf.reduce_sum(mask, axis=(1, 2)) + 1e-8)
+
+    # If we're just computing the error for thresholding, return it directly
+    if return_only_errors:
+        return per_event_error  # shape: (batch_size,)
+
     reconstruction_loss = tf.reduce_mean(per_event_error)
 
-    # === KL Divergence
+    # === KL divergence
     z_log_var = tf.clip_by_value(z_log_var, -10.0, 10.0)
-    kl_per_sample = -0.5 * tf.reduce_sum(1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis=1)
+    kl_per_sample = -0.5 * tf.reduce_sum(
+        1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis=1
+    )
     kl_loss = tf.reduce_mean(kl_per_sample)
 
     total_loss = reconstruction_loss + beta * kl_loss
-
     return total_loss, reconstruction_loss, kl_loss
 
 

@@ -1,8 +1,8 @@
 CONFIG = {
-    #"DATA_PATH":"/home/cblasco/project_dat255_DL/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",
-    "DATA_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5", #/Users/carlamiquelblasco/Desktop/MASTER BERGEN v2/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",  # Path to dataset
+    "DATA_PATH":"/home/cblasco/project_dat255_DL/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",
+    #"DATA_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5", #/Users/carlamiquelblasco/Desktop/MASTER BERGEN v2/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",  # Path to dataset
     "MODEL_TYPE": "vae",  # Change to "cnn" or "rnn" to try different models
-    "MODE": "test",
+    "MODE": "train",
     #"CHUNK_SIZE": 20000,
     #"NUM_CHUNKS": 20,
     "PATIENCE": 5,
@@ -20,7 +20,7 @@ CONFIG = {
     "LEARNING_RATE_MAX": 0.01,  # Maximum learning rate for Optuna
     "CHECKPOINT_DIR": "./saved_models/checkpoints/",
     "FINAL_MODEL_DIR": "./saved_models/final/",
-    "MODEL_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/project_carla/VAE_Anomalie/saved_models/12042025",
+    "MODEL_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/project_carla/VAE_Anomalie/saved_models/13042025",
     "THRESHOLD_PERCENTILE": 95,  # Used for anomaly detection
     "FEATURE_WEIGHTS":[3.0, 1.0, 1.0], # Feature-wise weights: [pT, eta, phi]
 
@@ -29,8 +29,8 @@ CONFIG = {
     "AUTOENCODER_PARAMS": { 
         "vae": {
             "input_shape": (700, 3),  # Sequential
-            "encoder_layers": [256, 128],#[256, 128], [512, 256, 128]],  # Encoder hidden layers
-            "latent_dim": 32,  # Default dimensionality of latent space
+            "encoder_layers": [512, 256, 128],#[256, 128], [512, 256, 128]],  # Encoder hidden layers
+            "latent_dim": 16,  # Default dimensionality of latent space
             "latent_dim_min": 32, # Optuna
             "latent_dim_max": 128, # Optuna
             "latent_dim_step": 32, # Optuna
