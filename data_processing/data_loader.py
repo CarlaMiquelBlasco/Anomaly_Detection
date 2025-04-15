@@ -68,7 +68,7 @@ class DataLoader:
         num_background_test = int((1 - anomaly_ratio) * test_rate * total_samples)
         val_size = int(val_rate * total_samples)
 
-        # BUILD TEST DAATSET
+        # BUILD TEST DATASET
         self.test_indices = signal_indices[:num_signal_test] + background_indices[:num_background_test]
         self.test_labels = [1] * num_signal_test + [0] * num_background_test
         combined = list(zip(self.test_indices, self.test_labels))
@@ -100,8 +100,9 @@ class DataLoader:
 
             self.save_scalers(CONFIG["MODEL_PATH"])
         else:
-            #model_aux = "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/saved_models/test_last"
-            #self.load_scalers(CONFIG["MODEL_PATH"])
+            #model aux only used when we wanted to train using fitted scalers from previous trials so we don't have to wait
+            #model_aux = "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/project_carla/VAE_Anomalie/saved_models/13042025"
+            self.load_scalers(model_aux)
             self.load_scalers(CONFIG["MODEL_PATH"])
 
         print("\n[INFO] Fitted scaler stats:")
@@ -114,16 +115,6 @@ class DataLoader:
                 print(f"  {name}: mean={scaler.mean_[0]:.4f}, std={scaler.scale_[0]:.4f}")
             else:
                 print(f"  {name}: Unknown scaler type")
-
-        # DEBUG: Print raw vs scaled values from one example
-        #with h5py.File(self.data_path, "r") as f:
-        #    raw = f["df"]["block0_values"][self.train_indices[0]][:-1].reshape(700, 3)
-        #    scaled = self._apply_scalers(raw.copy())
-        #    print("\n[DEBUG] Sample raw values (first 5 rows):")
-        #    print(raw[:5])
-        #    print("[DEBUG] Sample scaled values (first 5 rows):")
-        #    print(scaled[:5])
-        #    print(f"[DEBUG] Scaled min: {scaled.min():.6f}, max: {scaled.max():.6f}, shape: {scaled.shape}")
 
     def _transform_event_with_mask(self, row_flat):
         row = row_flat.reshape(700, 3)
@@ -148,27 +139,6 @@ class DataLoader:
 
         return dataset.batch(CONFIG["BATCH_SIZE"]).repeat().prefetch(tf.data.AUTOTUNE)
 
-        # Plot first scaled event to debug:
-        #for batch in dataset.take(1):
-            #x, mask = batch  # If your dataset yields (inputs, mask)
-
-            # Take the first sample from the batch
-            #event = x.numpy()  # shape (700, 3)
-            #mask = mask.numpy()  # shape (700, 1)
-
-            # Plot the features of that single event
-            #import matplotlib.pyplot as plt
-            #plt.plot(event[:, 0], label="pT")
-            #plt.plot(event[:, 1], label="η")
-            #plt.plot(event[:, 2], label="φ")
-            #plt.plot(mask.flatten(), label="Mask", color='black', linestyle='--')
-            #plt.title("Single Event Features")
-            #plt.xlabel("Particle Index")
-            #plt.ylabel("Scaled Value")
-            #plt.legend()
-            #plt.grid(True)
-            #plt.show()
-
     def get_validation_dataset(self):
         val_features = []
         val_masks = []
@@ -183,16 +153,7 @@ class DataLoader:
         val_features = np.array(val_features, dtype=np.float32)
         val_masks = np.array(val_masks, dtype=np.float32)
 
-        #event = val_features[0]  # or use .take(1) if it's a generator
-        #plt.plot(event[:, 0], label="pT")
-        #plt.plot(event[:, 1], label="eta")
-        #plt.plot(event[:, 2], label="phi")
-        #plt.legend()
-        #plt.title("Sample Scaled Input Event for validation data")
-        #plt.show()
-
-        return tf.data.Dataset.from_tensor_slices((val_features, val_masks)).batch(CONFIG["BATCH_SIZE"]).prefetch(
-            tf.data.AUTOTUNE)
+        return tf.data.Dataset.from_tensor_slices((val_features, val_masks)).batch(CONFIG["BATCH_SIZE"]).prefetch(tf.data.AUTOTUNE)
 
     def get_test_dataset(self):
         test_features = []
@@ -208,14 +169,5 @@ class DataLoader:
         test_features = np.array(test_features, dtype=np.float32)
         test_masks = np.array(test_masks, dtype=np.float32)
 
-        #event = test_features[0]  # or use .take(1) if it's a generator
-        #plt.plot(event[:, 0], label="pT")
-        #plt.plot(event[:, 1], label="eta")
-        #plt.plot(event[:, 2], label="phi")
-        #plt.legend()
-        #plt.title("Sample Scaled Input Event for Test data")
-        #plt.show()
 
-        return tf.data.Dataset.from_tensor_slices(
-            ((test_features, test_masks), np.array(self.test_labels))
-        ).batch(CONFIG["BATCH_SIZE"]).prefetch(tf.data.AUTOTUNE)
+        return tf.data.Dataset.from_tensor_slices(((test_features, test_masks), np.array(self.test_labels))).batch(CONFIG["BATCH_SIZE"]).prefetch(tf.data.AUTOTUNE)

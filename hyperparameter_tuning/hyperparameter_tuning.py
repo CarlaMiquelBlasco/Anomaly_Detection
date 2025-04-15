@@ -52,7 +52,7 @@ def objective(trial):
             params["activation_decoder"] = trial.suggest_categorical("activation_decoder", params["activation_decoder"])
 
         learning_rate = trial.suggest_float("learning_rate", CONFIG["LEARNING_RATE_MIN"], CONFIG["LEARNING_RATE_MAX"], log=True)
-        _ = trial.suggest_int("num_samples", CONFIG["NUM_SAMPLES_MIN"], CONFIG["NUM_SAMPLES_MAX"], log=True)  # Not used anymore
+        #_ = trial.suggest_int("num_samples", CONFIG["NUM_SAMPLES_MIN"], CONFIG["NUM_SAMPLES_MAX"], log=True)  # Not used anymore
     else:
         # Use defaults if Optuna is disabled
         if model_type == "vae":

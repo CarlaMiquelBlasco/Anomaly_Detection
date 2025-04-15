@@ -2,7 +2,7 @@ import os
 import pickle
 import numpy as np
 import tensorflow as tf
-
+from tqdm  import tqdm
 from config import CONFIG
 from utils.file_utils import custom_loss
 from models.vae_autoencoder import VariationalAutoencoder, sampling
@@ -64,7 +64,7 @@ class AutoencoderTester:
         all_errors = []
         all_labels = []
 
-        for (inputs, mask), labels in test_dataset:
+        for (inputs, mask), labels in tqdm(test_dataset):
             inputs = tf.cast(inputs, tf.float32)
             mask = tf.cast(mask, tf.float32)
 
@@ -72,7 +72,11 @@ class AutoencoderTester:
                 inputs = tf.expand_dims(inputs, axis=-1)
 
             # Passes the input inputs through the model to get the reconstruction
-            reconstructed = self.model((inputs, mask), training=False)
+            if self.model_type in ["cnn", "rnn"]:
+                reconstructed = self.model(inputs, training=False)
+            else:
+                reconstructed = self.model((inputs, mask), training=False)
+
             reconstructed = tf.cast(reconstructed, tf.float32)
 
             # Handle any NaNs in output
