@@ -8,12 +8,13 @@ import hdf5plugin  # Required to read compressed HDF5 files
 
 from config import CONFIG
 from models.autoencoders_factory import AutoencoderFactory
-from data_processing.data_loader_v2 import DataLoader
+from data_processing.data_loader import DataLoader
 from models.train import AutoencoderTrainer
 from models.test import AutoencoderTester
 from utils.visualization import log_optuna_study, plot_results, analyze_distribution
 from hyperparameter_tuning.hyperparameter_tuning import objective
 from utils.file_utils import get_model_filename, get_latest_model
+from utils.run_plots import run_all_plots
 
 
 def parse_arguments():
@@ -48,6 +49,9 @@ def parse_arguments():
 
     parser.add_argument("--optuna_trials", type=int, default=CONFIG["OPTUNA_TRIALS"],
                         help="Number of Optuna trials to perform")
+
+    parser.add_argument("--plots", nargs="+", default=CONFIG["PLOTS"],
+                        help="List of plots to generate. Options: 'error_dist', 'event_comparison', 'latent', 'density', 'recon_vs_orig'")
 
     return parser.parse_args()
 
@@ -102,8 +106,6 @@ def main():
         data_loader = DataLoader(CONFIG["MODEL_PATH"])
         data_loader.prepare_datasets()
         test_dataset = data_loader.get_test_dataset()
-        #val_dataset_back, val_dataset_back_labeled, val_dataset_full, val_labels, test_dataset, test_labels, start_offset = data_loader.load_fixed_validation_and_test_sets()
-        #analyze_distribution(test_labels)
 
         # Initialize and load the model
         model_params = CONFIG["AUTOENCODER_PARAMS"][args.model_type]
@@ -117,7 +119,9 @@ def main():
         errors_test, threshold_test, predictions_test, history, labels = tester.test(test_dataset)
 
         # Plot results
-        plot_results(errors_test, threshold_test, labels, history)
+        model = tester.get_model()
+        run_all_plots(errors_test, threshold_test, labels, history, args.plots, test_dataset, model)
+        #plot_results(errors_test, threshold_test, labels, history)
 
 
 if __name__ == "__main__":

@@ -3,184 +3,219 @@ import pickle
 import h5py
 import numpy as np
 import tensorflow as tf
-from sklearn.preprocessing import MinMaxScaler
-
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from config import CONFIG
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 
 class DataLoader:
-    """
-    Handles loading and preprocessing of LHC dataset for training, validation, and testing.
-    Supports chunked loading for memory-efficient training.
-    """
-
-    def __init__(self, model_dir, num_samples=None):
-        self.chunk_size = num_samples if num_samples else CONFIG["CHUNK_SIZE"]
-        self.validation_data_rate = CONFIG["VALIDATION_DATA_RATE"]
-        self.test_data_rate = CONFIG["TEST_DATA_RATE"]
-        self.validation_anomaly_ratio = CONFIG["VALIDATION_ANOMALY_RATIO"]
-        self.test_anomaly_ratio = CONFIG["TEST_ANOMALY_RATIO"]
+    def __init__(self, model_dir):
         self.data_path = CONFIG["DATA_PATH"]
-        self.scaler = MinMaxScaler()
+        self.scalers = [StandardScaler()] + [MinMaxScaler() for _ in range(2)]  # For pT, η, φ
         self.model_dir = model_dir
-        self.background_offset = None  # Will be set after loading validation/test
 
-    def save_scaler(self, path=None):
+        self.test_indices = []
+        self.test_labels = []
+        self.val_indices = []
+        self.train_indices = []
+
+    def save_scalers(self, path=None):
         path = path or self.model_dir
-        with open(os.path.join(path, "scaler.pkl"), "wb") as f:
-            pickle.dump(self.scaler, f)
-        print(f"[INFO] Scaler saved to {os.path.join(path, 'scaler.pkl')}")
+        with open(os.path.join(path, "scalers.pkl"), "wb") as f:
+            pickle.dump(self.scalers, f)
 
-    def load_scaler(self, path=None):
+    def load_scalers(self, path=None):
         path = path or self.model_dir
-        with open(os.path.join(path, "scaler.pkl"), "rb") as f:
-            self.scaler = pickle.load(f)
-        print(f"[INFO] Scaler loaded from {os.path.join(path, 'scaler.pkl')}")
+        with open(os.path.join(path, "scalers.pkl"), "rb") as f:
+            self.scalers = pickle.load(f)
 
-    def load_hdf5_data(self, chunk_size=1000, max_samples=None, start_offset=0):
+    def _apply_scalers(self, arr):
+        # Detect zero-padded rows
+        real_mask = ~np.all(arr == 0, axis=1)
+
+        for i in range(3):
+            feature = arr[:, i]
+            feature[real_mask] = self.scalers[i].transform(feature[real_mask].reshape(-1, 1)).flatten()
+            feature[~real_mask] = 0.0  # Reset padded rows
+
+        return arr
+
+    def prepare_datasets(self):
+        print("[INFO] Preparing dataset and fitting scalers...")
+        test_rate = CONFIG["TEST_DATA_RATE"]
+        val_rate = CONFIG["VALIDATION_DATA_RATE"]
+        anomaly_ratio = CONFIG["TEST_ANOMALY_RATIO"] # percentage of anomalies in the test dataset
+
+        signal_indices = []
+        background_indices = []
+
         with h5py.File(self.data_path, "r") as f:
             data = f["df"]["block0_values"]
-            for i in range(start_offset, data.shape[0], chunk_size):
-                chunk = data[i:i + chunk_size]
-                yield chunk
-                if max_samples and i + chunk_size - start_offset >= max_samples:
-                    break
+            for i in tqdm(range(data.shape[0])):
+                label = data[i, -1]
+                if label == 1:
+                    signal_indices.append(i)
+                else:
+                    background_indices.append(i)
 
-    def to_tf_dataset(self, data, labels=None, shuffle=True):
-        batch_size = CONFIG["BATCH_SIZE"]
-        dataset = tf.data.Dataset.from_tensor_slices((data, labels) if labels is not None else (data, data))
-        if shuffle:
-            dataset = dataset.shuffle(buffer_size=len(data))
-        return dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+        np.random.seed(43)
+        np.random.shuffle(signal_indices)
+        np.random.shuffle(background_indices)
 
-    def preprocess_data(self, mode, offset):
-        """
-        Loads a chunk of background training data starting from the given offset.
-        Only 'train' mode is supported in chunked mode.
-        """
-        if mode != "train":
-            raise ValueError("Only 'train' mode is supported in chunked training.")
+        total_samples = len(signal_indices) + len(background_indices)
+        num_signal_test = int(anomaly_ratio * test_rate * total_samples)
+        num_background_test = int((1 - anomaly_ratio) * test_rate * total_samples)
+        val_size = int(val_rate * total_samples)
 
-        background_data = []
-        accumulated = 0
+        # BUILD TEST DAATSET
+        self.test_indices = signal_indices[:num_signal_test] + background_indices[:num_background_test]
+        self.test_labels = [1] * num_signal_test + [0] * num_background_test
+        combined = list(zip(self.test_indices, self.test_labels))
+        np.random.shuffle(combined)
+        self.test_indices, self.test_labels = zip(*combined)
 
-        for chunk in self.load_hdf5_data(chunk_size=10000, start_offset=offset):
-            if chunk.ndim == 1:
-                chunk = chunk.reshape(1, -1)
+        #BUILD TRAIN AND VALIDATION (ONLY BCKG)
+        background_remaining = background_indices[num_background_test:]
+        self.val_indices = background_remaining[:val_size]
+        self.train_indices = background_remaining[val_size:]
 
-            background_chunk = chunk[chunk[:, -1] == 0]
-            background_data.append(background_chunk)
-            accumulated += background_chunk.shape[0]
+        if CONFIG["MODE"] == "train":
+            all_particles = []
 
-            if accumulated >= self.chunk_size:
-                break
+            with h5py.File(self.data_path, "r") as f:
+                data = f["df"]["block0_values"]
+                for idx in tqdm(self.train_indices):
+                    row = data[idx][:-1].reshape(700, 3)
 
-        background_data = np.vstack(background_data)[:self.chunk_size]
-        np.random.shuffle(background_data)
+                    # Filter out zero-padded particles for fitting the scaler
+                    non_zero_particles = row[~np.all(row == 0, axis=1)]
+                    all_particles.append(non_zero_particles)
 
-        train_features = background_data[:, :-1]
-        self.scaler.fit(train_features)
-        train_features = self.scaler.transform(train_features).reshape(-1, 700, 3)
+            all_particles = np.concatenate(all_particles, axis=0)  # Shape: (N, 3)
+            print(f"[DEBUG] Fitting scalers on {all_particles.shape[0]} real particles (non-padded)")
 
-        print("[DEBUG] Training data shape:", train_features.shape)
-        print("[DEBUG] Training feature min/max:", np.min(train_features), np.max(train_features))
-        print(f"[DEBUG] Loaded chunk of shape: {background_data.shape}")
-        print(f"[DEBUG] Scaled data min: {train_features.min():.4f}, max: {train_features.max():.4f}")
+            for i in range(3):
+                self.scalers[i].fit(all_particles[:, i].reshape(-1, 1))
 
-        return self.to_tf_dataset(train_features)
+            self.save_scalers(CONFIG["MODEL_PATH"])
+        else:
+            #model_aux = "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/saved_models/test_last"
+            #self.load_scalers(CONFIG["MODEL_PATH"])
+            self.load_scalers(CONFIG["MODEL_PATH"])
 
-    def load_fixed_validation_and_test_sets(self):
-        """
-        Loads fixed-size validation and test sets containing background and signal samples.
-        Returns the datasets along with background offset for training.
-        """
-        print("[INFO] Loading validation and test sets...")
+        print("\n[INFO] Fitted scaler stats:")
+        for i, name in enumerate(['pT', 'η', 'φ']):
+            scaler = self.scalers[i]
+            if isinstance(scaler, MinMaxScaler):
+                print(f"  {name}: min={scaler.data_min_[0]:.4f}, max={scaler.data_max_[0]:.4f}, "
+                      f"range={scaler.data_range_[0]:.4f}")
+            elif isinstance(scaler, StandardScaler):
+                print(f"  {name}: mean={scaler.mean_[0]:.4f}, std={scaler.scale_[0]:.4f}")
+            else:
+                print(f"  {name}: Unknown scaler type")
 
-        signal_data = []
-        background_data = []
+        # DEBUG: Print raw vs scaled values from one example
+        #with h5py.File(self.data_path, "r") as f:
+        #    raw = f["df"]["block0_values"][self.train_indices[0]][:-1].reshape(700, 3)
+        #    scaled = self._apply_scalers(raw.copy())
+        #    print("\n[DEBUG] Sample raw values (first 5 rows):")
+        #    print(raw[:5])
+        #    print("[DEBUG] Sample scaled values (first 5 rows):")
+        #    print(scaled[:5])
+        #    print(f"[DEBUG] Scaled min: {scaled.min():.6f}, max: {scaled.max():.6f}, shape: {scaled.shape}")
 
-        max_total = CONFIG.get("MAX_VAL_TEST_SAMPLES", 250000)
-        total_val = int(self.validation_data_rate * max_total)
-        total_test = int(self.test_data_rate * max_total)
+    def _transform_event_with_mask(self, row_flat):
+        row = row_flat.reshape(700, 3)
+        mask = (np.any(row != 0, axis=-1)).astype(np.float32).reshape(700, 1) # Generates a truth mask where active particles are 1.0, and zero-padded rows are 0.0
+        scaled = self._apply_scalers(row.copy()) # Applies min-max scaling per feature (pT, η, φ).
+        return scaled.astype(np.float32), mask
 
-        num_signal_val = int(self.validation_anomaly_ratio * total_val)
-        num_background_val = total_val - num_signal_val
-        num_signal_test = int(self.test_anomaly_ratio * total_test)
-        num_background_test = total_test - num_signal_test
+    def get_lazy_train_dataset(self):
+        def generator():
+            with h5py.File(self.data_path, "r") as f:
+                data = f["df"]["block0_values"]
+                for idx in self.train_indices:
+                    row = data[idx][:-1]
+                    scaled, mask = self._transform_event_with_mask(row)
+                    yield scaled, mask
 
-        needed_signal = num_signal_val + num_signal_test
-        needed_background = num_background_val + num_background_test
-
-        loaded_signal = loaded_background = rows_read = 0
-
-        for chunk in self.load_hdf5_data(chunk_size=10000, start_offset=0):
-            if chunk.ndim == 1:
-                chunk = chunk.reshape(1, -1)
-
-            sig = chunk[chunk[:, -1] == 1]
-            bg = chunk[chunk[:, -1] == 0]
-
-            if loaded_signal < needed_signal:
-                signal_data.append(sig)
-                loaded_signal += sig.shape[0]
-
-            if loaded_background < needed_background:
-                background_data.append(bg)
-                loaded_background += bg.shape[0]
-                rows_read += chunk.shape[0]
-
-            if loaded_signal >= needed_signal and loaded_background >= needed_background:
-                break
-
-        self.background_offset = rows_read
-
-        signal_data = np.vstack(signal_data)[:needed_signal]
-        background_data = np.vstack(background_data)[:needed_background]
-        np.random.shuffle(signal_data)
-        np.random.shuffle(background_data)
-
-        # Split into validation/test sets
-        val_signal = signal_data[:num_signal_val]
-        val_background = background_data[:num_background_val]
-        test_signal = signal_data[num_signal_val:num_signal_val + num_signal_test]
-        test_background = background_data[num_background_val:num_background_val + num_background_test]
-
-        val_data = np.vstack((val_signal, val_background))
-        test_data = np.vstack((test_signal, test_background))
-
-        np.random.shuffle(val_data)
-        np.random.shuffle(test_data)
-
-        val_features = val_data[:, :-1]
-        val_labels = val_data[:, -1]
-        test_features = test_data[:, :-1]
-        test_labels = test_data[:, -1]
-
-        # Fit and apply scaler
-        self.scaler.fit(background_data[:, :-1])
-        self.save_scaler(CONFIG["MODEL_PATH"])
-        val_features = self.scaler.transform(val_features).reshape(-1, 700, 3)
-        test_features = self.scaler.transform(test_features).reshape(-1, 700, 3)
-
-        # Return datasets
-        print(f"[INFO] Validation set: {len(val_signal)} signal, {len(val_background)} background")
-        print(f"[INFO] Test set: {len(test_signal)} signal, {len(test_background)} background")
-
-        val_dataset_back = self.to_tf_dataset(val_features[val_labels == 0], shuffle=False)
-        val_dataset_back_labeled = self.to_tf_dataset(val_features[val_labels == 0], labels=val_labels[val_labels == 0], shuffle=False)
-        val_dataset_full = self.to_tf_dataset(val_features, labels=val_labels, shuffle=False)
-        test_dataset = self.to_tf_dataset(test_features, labels=test_labels, shuffle=False)
-
-        print("[DEBUG] Example scaled features (val):", val_features[0][:5])
-        print("[DEBUG] Label distribution in validation:", np.unique(val_labels, return_counts=True))
-        print("[DEBUG] Label distribution in test:", np.unique(test_labels, return_counts=True))
-
-        return (
-            val_dataset_back,
-            val_dataset_back_labeled,
-            val_dataset_full,
-            val_labels,
-            test_dataset,
-            test_labels,
-            self.background_offset
+        output_signature = (
+            tf.TensorSpec(shape=(700, 3), dtype=tf.float32),
+            tf.TensorSpec(shape=(700, 1), dtype=tf.float32)
         )
+        dataset = tf.data.Dataset.from_generator(generator, output_signature=output_signature)
+
+        return dataset.batch(CONFIG["BATCH_SIZE"]).repeat().prefetch(tf.data.AUTOTUNE)
+
+        # Plot first scaled event to debug:
+        #for batch in dataset.take(1):
+            #x, mask = batch  # If your dataset yields (inputs, mask)
+
+            # Take the first sample from the batch
+            #event = x.numpy()  # shape (700, 3)
+            #mask = mask.numpy()  # shape (700, 1)
+
+            # Plot the features of that single event
+            #import matplotlib.pyplot as plt
+            #plt.plot(event[:, 0], label="pT")
+            #plt.plot(event[:, 1], label="η")
+            #plt.plot(event[:, 2], label="φ")
+            #plt.plot(mask.flatten(), label="Mask", color='black', linestyle='--')
+            #plt.title("Single Event Features")
+            #plt.xlabel("Particle Index")
+            #plt.ylabel("Scaled Value")
+            #plt.legend()
+            #plt.grid(True)
+            #plt.show()
+
+    def get_validation_dataset(self):
+        val_features = []
+        val_masks = []
+        with h5py.File(self.data_path, "r") as f:
+            data = f["df"]["block0_values"]
+            for idx in self.val_indices:
+                row = data[idx][:-1]
+                scaled, mask = self._transform_event_with_mask(row)
+                val_features.append(scaled)
+                val_masks.append(mask)
+
+        val_features = np.array(val_features, dtype=np.float32)
+        val_masks = np.array(val_masks, dtype=np.float32)
+
+        #event = val_features[0]  # or use .take(1) if it's a generator
+        #plt.plot(event[:, 0], label="pT")
+        #plt.plot(event[:, 1], label="eta")
+        #plt.plot(event[:, 2], label="phi")
+        #plt.legend()
+        #plt.title("Sample Scaled Input Event for validation data")
+        #plt.show()
+
+        return tf.data.Dataset.from_tensor_slices((val_features, val_masks)).batch(CONFIG["BATCH_SIZE"]).prefetch(
+            tf.data.AUTOTUNE)
+
+    def get_test_dataset(self):
+        test_features = []
+        test_masks = []
+        with h5py.File(self.data_path, "r") as f:
+            data = f["df"]["block0_values"]
+            for idx in self.test_indices:
+                row = data[idx][:-1]
+                scaled, mask = self._transform_event_with_mask(row)
+                test_features.append(scaled)
+                test_masks.append(mask)
+
+        test_features = np.array(test_features, dtype=np.float32)
+        test_masks = np.array(test_masks, dtype=np.float32)
+
+        #event = test_features[0]  # or use .take(1) if it's a generator
+        #plt.plot(event[:, 0], label="pT")
+        #plt.plot(event[:, 1], label="eta")
+        #plt.plot(event[:, 2], label="phi")
+        #plt.legend()
+        #plt.title("Sample Scaled Input Event for Test data")
+        #plt.show()
+
+        return tf.data.Dataset.from_tensor_slices(
+            ((test_features, test_masks), np.array(self.test_labels))
+        ).batch(CONFIG["BATCH_SIZE"]).prefetch(tf.data.AUTOTUNE)

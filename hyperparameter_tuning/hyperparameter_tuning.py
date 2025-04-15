@@ -3,7 +3,7 @@ import pickle
 import optuna
 import tensorflow as tf
 from config import CONFIG
-from data_processing.data_loader_v2 import DataLoader
+from data_processing.data_loader import DataLoader
 from models.autoencoders_factory import AutoencoderFactory
 from models.train import AutoencoderTrainer
 

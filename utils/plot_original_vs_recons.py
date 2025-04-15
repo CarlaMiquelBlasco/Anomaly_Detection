@@ -5,7 +5,7 @@ import tensorflow as tf
 import hdf5plugin
 
 from config import CONFIG
-from data_processing.data_loader_v2 import DataLoader
+from data_processing.data_loader import DataLoader
 from models.vae_autoencoder import VariationalAutoencoder, sampling
 from tensorflow.keras.utils import custom_object_scope
 

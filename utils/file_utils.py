@@ -101,10 +101,8 @@ def vae_loss(inputs, outputs, z_mean, z_log_var, beta, mask=None, return_only_er
     """
 
     if mask is None:
-        print("[DEBUG] No mask provided, using ones")
+        print("[INFO] No mask provided, using ones")
         mask = tf.ones_like(inputs[..., :1])
-    else:
-        print("[DEBUG] Mask provided and used")
 
     # Feature-wise weights: [pT, eta, phi]
     feature_weights = tf.constant(CONFIG["FEATURE_WEIGHTS"], dtype=tf.float32)
@@ -134,7 +132,7 @@ def vae_loss(inputs, outputs, z_mean, z_log_var, beta, mask=None, return_only_er
     total_loss = reconstruction_loss + beta * kl_loss
     return total_loss, reconstruction_loss, kl_loss
 
-
+'''
 def lr_log(epoch, lr):
     """
     Logs the learning rate at the start of each epoch.
@@ -143,3 +141,5 @@ def lr_log(epoch, lr):
     new_lr = lr * 0.95  # Decay by 5% every epoch
     print(f"[DEBUG] Epoch {epoch}: LR decayed from {lr:.6f} → {new_lr:.6f}")
     return new_lr
+
+'''

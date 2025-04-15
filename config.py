@@ -1,14 +1,11 @@
 CONFIG = {
-    "DATA_PATH":"/home/cblasco/project_dat255_DL/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",
-    #"DATA_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5", #/Users/carlamiquelblasco/Desktop/MASTER BERGEN v2/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",  # Path to dataset
+    #"DATA_PATH":"/home/cblasco/project_dat255_DL/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",
+    "DATA_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5", #/Users/carlamiquelblasco/Desktop/MASTER BERGEN v2/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",  # Path to dataset
     "MODEL_TYPE": "vae",  # Change to "cnn" or "rnn" to try different models
-    "MODE": "train",
-    #"CHUNK_SIZE": 20000,
-    #"NUM_CHUNKS": 20,
+    "MODE": "test",
     "PATIENCE": 5,
     "TEST_DATA_RATE": 0.02,               # % of total data for test
     "TEST_ANOMALY_RATIO": 0.1,  # 1% anomalies in the test set
-    #"VALIDATION_ANOMALY_RATIO": 0.1,
     "VALIDATION_DATA_RATE": 0.02,  # Rate of validation data within the train data
     "USE_OPTUNA": False, # Hyperparameter tuning with Optuna
     "OPTUNA_TRIALS": 1, # Number of Optuna trials (hyperparameter combinations)
@@ -23,6 +20,12 @@ CONFIG = {
     "MODEL_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/project_carla/VAE_Anomalie/saved_models/13042025",
     "THRESHOLD_PERCENTILE": 95,  # Used for anomaly detection
     "FEATURE_WEIGHTS":[3.0, 1.0, 1.0], # Feature-wise weights: [pT, eta, phi]
+
+    #For plot test:
+    "PLOTS": ['error_dist', 'event_comparison', 'latent', 'density', 'recon_vs_orig'],
+    "LATENT_PLOT_MAX_POINTS":3000,
+    "LATENT_PLOT_METHOD":"tsne", #or pca
+
 
     # Several options means Optuna will search for the best hyperparameters 
     # If not using Optuna, the first value in each list will be used

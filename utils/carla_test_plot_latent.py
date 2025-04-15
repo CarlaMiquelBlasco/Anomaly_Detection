@@ -8,7 +8,7 @@ from tensorflow.keras.utils import custom_object_scope
 import hdf5plugin
 
 from config import CONFIG
-from data_processing.data_loader_v2 import DataLoader
+from data_processing.data_loader import DataLoader
 from models.vae_autoencoder import VariationalAutoencoder, sampling
 
 # === Load trained VAE model ===
@@ -85,3 +85,4 @@ plt.plot(z_means[labels==0].mean(axis=0), label="Background mean z")
 plt.legend()
 plt.title("Average latent representation")
 plt.show()
+

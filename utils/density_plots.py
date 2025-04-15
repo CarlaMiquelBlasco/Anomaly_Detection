@@ -7,7 +7,7 @@ from tensorflow.keras.utils import custom_object_scope
 import hdf5plugin
 
 from config import CONFIG
-from data_processing.data_loader_v2 import DataLoader
+from data_processing.data_loader import DataLoader
 from models.vae_autoencoder import VariationalAutoencoder
 
 # === Load trained model ===

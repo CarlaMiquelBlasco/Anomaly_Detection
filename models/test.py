@@ -138,3 +138,6 @@ class AutoencoderTester:
 
         return errors, threshold, predictions, history, true_labels
 
+    def get_model(self):
+        return self.model
+

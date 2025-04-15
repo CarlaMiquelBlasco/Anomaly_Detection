@@ -47,7 +47,6 @@ class AutoencoderTrainer:
         )
 
         optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule, clipnorm=1.0)
-        #optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate, clipnorm=1.0)
         if self.model_type == "vae":
             self.model.compile(optimizer=optimizer)
         elif self.model_type == "cnn":
@@ -60,7 +59,6 @@ class AutoencoderTrainer:
 
         # Checkpoint (global best)
         checkpoint_path = os.path.join(CONFIG["MODEL_PATH"], "model.keras")
-        # os.makedirs(CONFIG["MODEL_PATH"], exist_ok=True)
 
         checkpoint_cb = ModelCheckpoint(
             checkpoint_path,
@@ -81,9 +79,6 @@ class AutoencoderTrainer:
             mode = "min"
         )
         callbacks.append(early_stop_cb)
-
-        # Learning rate decay:
-        #callbacks.append(LearningRateScheduler(lr_log))
 
         if self.model_type=="vae":
             # Increasing beta gradually
@@ -132,7 +127,7 @@ class AutoencoderTrainer:
         threshold = np.percentile(errors_val, CONFIG["THRESHOLD_PERCENTILE"])
 
         return history, threshold
-
+    '''
     def evaluate(self, dataset, labels=None, model_path=None):
         """
         Evaluates the model on a dataset and computes reconstruction error and predictions.
@@ -206,3 +201,4 @@ class AutoencoderTrainer:
             print("[INFO] No labels provided. Skipping accuracy.")
 
         return errors, threshold, predictions
+'''
