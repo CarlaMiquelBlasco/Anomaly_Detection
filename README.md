@@ -67,7 +67,7 @@ To evaluate a **pretrained model**, set:
 
 ```python
 MODE = "test"
-MODEL_TYPE = "vae"
+MODEL_TYPE = "vae" | "rnn" | "cnn"
 MODEL_PATH = "./saved_models/your_model"
 ```
 
