@@ -7,6 +7,7 @@ from sklearn.manifold import TSNE
 import tensorflow as tf
 import os
 import datetime
+from config import CONFIG
 
 def setup_tensorboard(log_dir="logs/fit/"):
     """
@@ -312,9 +313,21 @@ def original_vs_reconstructed(test_dataset, model):
     mask_anomaly = mask_np[anomaly_idx]
 
     # === Reconstruct ===
-    reconstructed_bg = model((tf.expand_dims(original_bg, 0), tf.expand_dims(mask_bg, 0)), training=False).numpy()[0]
-    reconstructed_anomaly = \
-    model((tf.expand_dims(original_anomaly, 0), tf.expand_dims(mask_anomaly, 0)), training=False).numpy()[0]
+    # === Reconstruct ===
+    def reconstruct(input_data, input_mask):
+        input_data = tf.expand_dims(input_data, 0)
+        input_mask = tf.expand_dims(input_mask, 0)
+        if CONFIG["MODEL_TYPE"] == "vae":
+            return model((input_data, input_mask), training=False).numpy()[0]
+        else:
+            return model(input_data, training=False).numpy()[0]
+
+    reconstructed_bg = reconstruct(original_bg, mask_bg)
+    reconstructed_anomaly = reconstruct(original_anomaly, mask_anomaly)
+
+    #reconstructed_bg = model((tf.expand_dims(original_bg, 0), tf.expand_dims(mask_bg, 0)), training=False).numpy()[0]
+    #reconstructed_anomaly = \
+    #model((tf.expand_dims(original_anomaly, 0), tf.expand_dims(mask_anomaly, 0)), training=False).numpy()[0]
 
     # === Plotting ===
     def plot_event(original, reconstructed, mask, title):

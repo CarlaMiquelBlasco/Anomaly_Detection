@@ -102,7 +102,7 @@ class DataLoader:
         else:
             #model aux only used when we wanted to train using fitted scalers from previous trials so we don't have to wait
             #model_aux = "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/project_carla/VAE_Anomalie/saved_models/13042025"
-            self.load_scalers(model_aux)
+            #self.load_scalers(model_aux)
             self.load_scalers(CONFIG["MODEL_PATH"])
 
         print("\n[INFO] Fitted scaler stats:")

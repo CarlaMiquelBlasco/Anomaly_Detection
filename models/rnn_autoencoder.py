@@ -22,6 +22,8 @@ class RNNAutoencoder:
 
         # Encoder
         encoded = masked_input
+        print(params)
+        print(encoder_layers)
         for units in encoder_layers:
             if rnn_type == 'LSTM':
                 encoded = LSTM(units, activation=activation_encoder, return_sequences=True)(encoded)

@@ -11,7 +11,7 @@ def run_all_plots(errors, threshold, labels, history, plot_types, test_dataset, 
         print("[PLOT] Plotting error distributions and metrics...")
         plot_results(errors, threshold, labels, history)
 
-    if "event_comparison" in plot_types:
+    if "event_comparison" in plot_types and CONFIG["MODEL_TYPE"]=="vae":
         print("[PLOT] Plotting event comparison (normal vs anomaly)...")
         anomalies = np.where(errors > threshold)[0]
         original_data = []
@@ -20,13 +20,13 @@ def run_all_plots(errors, threshold, labels, history, plot_types, test_dataset, 
         original_data = np.concatenate(original_data)
         plot_event_comparison(original_data, anomalies, errors)
 
-    if "latent" in plot_types:
+    if "latent" in plot_types and CONFIG["MODEL_TYPE"]=="vae":
         print("[PLOT] Plotting latent space projection...")
         max_points = CONFIG["LATENT_PLOT_MAX_POINTS"]
         method = CONFIG["LATENT_PLOT_METHOD"]
         plot_latent(test_dataset, autoencoder, max_points, method)
 
-    if "density" in plot_types:
+    if "density" in plot_types and CONFIG["MODEL_TYPE"]=="vae":
         print("[PLOT] Plotting density plots for errors and latent dims...")
         plot_density(test_dataset, autoencoder)
 

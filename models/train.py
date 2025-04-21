@@ -90,8 +90,13 @@ class AutoencoderTrainer:
             callbacks.append(TFKerasPruningCallback(trial, 'val_loss'))
 
         # Train model
-        wrapped_train_dataset = train_dataset.map(lambda x, mask: ((x, mask), x)) # specify input,mask, target so the model doesn't confuse mask with target
-        wrapped_val_dataset = val_dataset.map(lambda x, mask: ((x, mask), x))
+        if self.model_type == "vae":
+            wrapped_train_dataset = train_dataset.map(lambda x, mask: ((x, mask), x))
+            wrapped_val_dataset = val_dataset.map(lambda x, mask: ((x, mask), x))
+        else:
+            wrapped_train_dataset = train_dataset.map(lambda x: (x, x))
+            wrapped_val_dataset = val_dataset.map(lambda x: (x, x))
+
         history = self.model.fit(
             wrapped_train_dataset,
             validation_data=wrapped_val_dataset,

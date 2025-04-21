@@ -38,6 +38,8 @@ def objective(trial):
             params["beta"] = trial.suggest_float("beta", params["beta_min"], params["beta_max"])
 
         elif model_type == "cnn":
+            train_dataset = train_dataset.map(lambda x, m: x)
+            val_dataset = val_dataset.map(lambda x, m: x)
             params["encoder_filters"] = trial.suggest_categorical("encoder_filters", params["encoder_filters"])
             params["kernel_sizes"] = trial.suggest_categorical("kernel_sizes", params["kernel_sizes"])
             params["latent_dim"] = trial.suggest_int("latent_dim", params["latent_dim_min"], params["latent_dim_max"], step=params["latent_dim_step"])
@@ -45,6 +47,8 @@ def objective(trial):
             params["activation_decoder"] = trial.suggest_categorical("activation_decoder", params["activation_decoder"])
 
         elif model_type == "rnn":
+            train_dataset = train_dataset.map(lambda x, m: x)
+            val_dataset = val_dataset.map(lambda x, m: x)
             params["encoder_layers"] = trial.suggest_categorical("encoder_layers", params["encoder_layers"])
             params["latent_dim"] = trial.suggest_int("latent_dim", params["latent_dim_min"], params["latent_dim_max"], step=params["latent_dim_step"])
             params["rnn_type"] = trial.suggest_categorical("rnn_type", params["rnn_type"])
@@ -58,11 +62,15 @@ def objective(trial):
         if model_type == "vae":
             pass  # All defaults are already loaded
         elif model_type == "cnn":
+            train_dataset = train_dataset.map(lambda x, m: x)
+            val_dataset = val_dataset.map(lambda x, m: x)
             params["encoder_filters"] = params["encoder_filters"][0]
             params["kernel_sizes"] = params["kernel_sizes"][0]
             params["activation_encoder"] = params["activation_encoder"][0]
             params["activation_decoder"] = params["activation_decoder"][0]
         elif model_type == "rnn":
+            train_dataset = train_dataset.map(lambda x, m: x)
+            val_dataset = val_dataset.map(lambda x, m: x)
             params["encoder_layers"] = params["encoder_layers"][0]
             params["rnn_type"] = params["rnn_type"][0]
             params["activation_encoder"] = params["activation_encoder"][0]
