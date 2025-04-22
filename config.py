@@ -1,7 +1,7 @@
 CONFIG = {
     #"DATA_PATH":"/home/cblasco/project_dat255_DL/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",
     "DATA_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5", #/Users/carlamiquelblasco/Desktop/MASTER BERGEN v2/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",  # Path to dataset
-    "MODEL_TYPE": "vae",  # Change to "cnn" or "rnn" to try different models
+    "MODEL_TYPE": "rnn",  # Change to "cnn" or "rnn" to try different models
     "MODE": "train",
     "PATIENCE": 5,
     "TEST_DATA_RATE": 0.02,               # % of total data for test
@@ -10,7 +10,6 @@ CONFIG = {
     "USE_OPTUNA": False, # Hyperparameter tuning with Optuna
     "OPTUNA_TRIALS": 1, # Number of Optuna trials (hyperparameter combinations)
     "EPOCHS":10,
-    #"NUM_SAMPLES": 50000, # background samples to collect for this training iteration
     "BATCH_SIZE": 128,
     "LEARNING_RATE": 0.001, # Default learning rate
     "LEARNING_RATE_MIN": 0.00001,  # Minimum learning rate for Optuna
