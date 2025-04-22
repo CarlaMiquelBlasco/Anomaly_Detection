@@ -108,7 +108,7 @@ def vae_loss(inputs, outputs, z_mean, z_log_var, beta, mask=None, return_only_er
     feature_weights = tf.constant(CONFIG["FEATURE_WEIGHTS"], dtype=tf.float32)
     feature_weights = tf.reshape(feature_weights, (1, 1, 3))  # shape (1, 1, 3) for broadcasting
 
-    # === Reconstruction loss
+    # Reconstruction loss
     squared_error = tf.square(inputs - outputs)
     weighted_error = squared_error * feature_weights
     masked_error = weighted_error * mask
@@ -122,7 +122,7 @@ def vae_loss(inputs, outputs, z_mean, z_log_var, beta, mask=None, return_only_er
 
     reconstruction_loss = tf.reduce_mean(per_event_error)
 
-    # === KL divergence
+    # KL divergence
     z_log_var = tf.clip_by_value(z_log_var, -10.0, 10.0)
     kl_per_sample = -0.5 * tf.reduce_sum(
         1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis=1

@@ -188,7 +188,7 @@ def plot_results(errors, threshold, labels, history):
 
 
 def plot_latent(test_dataset, autoencoder, max_points, method):
-    # === Collect latent representations and labels ===
+    # Collect latent representations and labels
     z_means = []
     labels = []
 
@@ -201,7 +201,7 @@ def plot_latent(test_dataset, autoencoder, max_points, method):
     z_means = np.concatenate(z_means)
     labels = np.concatenate(labels)
 
-    # === Optional: downsample for t-SNE speed ===
+    # Optional: downsample for t-SNE speed
     if len(z_means) > max_points:
         indices = np.random.choice(len(z_means), max_points, replace=False)
         z_means = z_means[indices]
@@ -216,7 +216,7 @@ def plot_latent(test_dataset, autoencoder, max_points, method):
 
     z_2d = reducer.fit_transform(z_means)
 
-    # === Plot the 2D latent space ===
+    # Plot the 2D latent space
     plt.figure(figsize=(8, 6))
     plt.scatter(z_2d[labels == 0, 0], z_2d[labels == 0, 1], c='blue', label='Background', alpha=0.5, s=8)
     plt.scatter(z_2d[labels == 1, 0], z_2d[labels == 1, 1], c='red', label='Anomalies', alpha=0.6, s=8)
@@ -228,14 +228,14 @@ def plot_latent(test_dataset, autoencoder, max_points, method):
     plt.tight_layout()
     plt.show()
 
-    # === Histograms of z_mean dimensions ===
+    # Histograms of z_mean dimensions
     import seaborn as sns
     for i in range(min(5, z_means.shape[1])):
         sns.histplot(z_means[:, i], kde=True)
         plt.title(f"z_mean[{i}] distribution")
         plt.show()
 
-    # === Average z_mean for bg vs anomaly ===
+    # Average z_mean for bg vs anomaly
     plt.plot(z_means[labels == 1].mean(axis=0), label="Anomaly mean z")
     plt.plot(z_means[labels == 0].mean(axis=0), label="Background mean z")
     plt.legend()
@@ -244,7 +244,7 @@ def plot_latent(test_dataset, autoencoder, max_points, method):
 
 
 def plot_density(test_dataset,model):
-    # === Collect latent reps, errors, labels ===
+    # Collect latent reps, errors, labels
     z_means = []
     recon_errors = []
     labels = []
@@ -270,7 +270,7 @@ def plot_density(test_dataset,model):
     recon_errors = np.concatenate(recon_errors)
     labels = np.concatenate(labels)
 
-    # === Plot 1: Density plot of reconstruction errors ===
+    # Plot 1: Density plot of reconstruction errors
     plt.figure(figsize=(8, 5))
     sns.kdeplot(recon_errors[labels == 0], label="Background", fill=True, color="blue")
     sns.kdeplot(recon_errors[labels == 1], label="Anomaly", fill=True, color="red")
@@ -282,7 +282,7 @@ def plot_density(test_dataset,model):
     plt.tight_layout()
     plt.show()
 
-    # === Plot 2: Density plots of first 5 latent dimensions ===
+    # Plot 2: Density plots of first 5 latent dimensions
     for i in range(min(5, z_means.shape[1])):
         plt.figure(figsize=(8, 5))
         sns.kdeplot(z_means[labels == 0, i], label="Background", fill=True)
@@ -295,14 +295,14 @@ def plot_density(test_dataset,model):
 
 
 def original_vs_reconstructed(test_dataset, model):
-    # === Get batch of data ===
+    # Get batch of data
     for (batch, mask), labels in test_dataset:
         batch_np = batch.numpy()
         mask_np = mask.numpy()
         labels_np = labels.numpy()
         break  # Just grab the first batch
 
-    # === Select background and anomaly indices ===
+    # Select background and anomaly indices
     bg_idx = np.where(labels_np == 0)[0][0]
     anomaly_idx = np.where(labels_np == 1)[0][0]
 
@@ -311,7 +311,7 @@ def original_vs_reconstructed(test_dataset, model):
     original_anomaly = batch_np[anomaly_idx]
     mask_anomaly = mask_np[anomaly_idx]
 
-    # === Reconstruct ===
+    # Reconstruct
     def reconstruct(input_data, input_mask):
         input_data = tf.expand_dims(input_data, 0)
         input_mask = tf.expand_dims(input_mask, 0)
@@ -323,7 +323,7 @@ def original_vs_reconstructed(test_dataset, model):
     reconstructed_bg = reconstruct(original_bg, mask_bg)
     reconstructed_anomaly = reconstruct(original_anomaly, mask_anomaly)
 
-    # === Plotting ===
+    # Plotting
     def plot_event(original, reconstructed, mask, title):
         mask_flat = mask.squeeze()
         active_particles = original[mask_flat.squeeze() > 0]

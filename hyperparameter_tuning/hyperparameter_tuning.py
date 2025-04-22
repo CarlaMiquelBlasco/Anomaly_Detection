@@ -17,7 +17,7 @@ def objective(trial):
     params = dict(CONFIG["AUTOENCODER_PARAMS"][model_type])  # Clone base params
     use_optuna = CONFIG["USE_OPTUNA"]
 
-    # === Load and prepare datasets ===
+    # Load and prepare datasets
     print("[INFO] Preparing datasets with streaming...")
     data_loader = DataLoader(CONFIG["MODEL_PATH"])
     data_loader.prepare_datasets()
@@ -29,7 +29,7 @@ def objective(trial):
     steps_per_epoch = train_size // CONFIG["BATCH_SIZE"]
     print(f"[INFO] Training steps per epoch: {steps_per_epoch}")
 
-    # === Suggest hyperparameters with Optuna ===
+    # Suggest hyperparameters with Optuna
     if use_optuna:
         if model_type == "vae":
             params["encoder_layers"] = trial.suggest_categorical("encoder_layers", params["encoder_layers"])
@@ -77,11 +77,11 @@ def objective(trial):
 
         learning_rate = CONFIG["LEARNING_RATE"]
 
-    # === Initialize model and trainer ===
+    # Initialize model and trainer
     autoencoder = AutoencoderFactory.get_autoencoder(model_type, params)
     trainer = AutoencoderTrainer(autoencoder, learning_rate=learning_rate)
 
-    # === Train model ===
+    # Train model
     history, threshold = trainer.train(
         train_dataset=train_dataset,
         val_dataset=val_dataset,
@@ -89,14 +89,14 @@ def objective(trial):
         trial=trial
     )
 
-    # === Save training history ===
+    # Save training history
     os.makedirs(CONFIG["MODEL_PATH"], exist_ok=True)
     history_path = os.path.join(CONFIG["MODEL_PATH"], "history.pkl")
     with open(history_path, "wb") as f:
         pickle.dump(history.history, f)
     print(f"[INFO] Training history saved to {history_path}")
 
-    # === Save threshold ===
+    # Save threshold
     threshold_path = os.path.join(CONFIG["MODEL_PATH"], "threshold.txt")
     with open(threshold_path, "w") as f:
         f.write(str(threshold))

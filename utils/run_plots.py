@@ -32,5 +32,5 @@ def run_all_plots(errors, threshold, labels, history, plot_types, test_dataset, 
 
     if "recon_vs_orig" in plot_types:
         print("[PLOT] Plotting original vs reconstructed events...")
-        # === Get batch of data ===
+        # Get batch of data
         original_vs_reconstructed(test_dataset, autoencoder)

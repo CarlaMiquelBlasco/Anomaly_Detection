@@ -165,7 +165,7 @@ class VariationalAutoencoder(Model):
         self.add_loss(loss)
 
 
-        # === Metrics for logging ===
+        # Metrics for logging
         self.loss_tracker.update_state(loss)
         self.reconstruction_loss_tracker.update_state(recon_loss)
         self.kl_loss_tracker.update_state(kl_loss)

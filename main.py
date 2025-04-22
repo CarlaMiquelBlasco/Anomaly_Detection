@@ -71,7 +71,7 @@ def main():
     CONFIG["USE_OPTUNA"] = args.use_optuna
     CONFIG["OPTUNA_TRIALS"] = args.optuna_trials
 
-    print("\n=== LHC Anomaly Detection Pipeline ===")
+    print("\n<<< LHC Anomaly Detection Pipeline >>>")
     print(f"Mode: {args.mode}")
     if args.mode == "train":
         print(f"Dataset: {CONFIG['DATA_PATH']}")

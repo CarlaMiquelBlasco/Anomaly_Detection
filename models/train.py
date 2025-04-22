@@ -38,7 +38,7 @@ class AutoencoderTrainer:
         start_time = time.time()
 
         # Compile model
-        # === Define decaying learning rate schedule ===
+        # Define decaying learning rate schedule
         lr_schedule = ExponentialDecay(
             initial_learning_rate=self.learning_rate,
             decay_steps=100000,  # Decay after N steps
@@ -113,7 +113,7 @@ class AutoencoderTrainer:
         elapsed = time.time() - start_time
         print(f"[INFO] Training completed in {time.strftime('%H:%M:%S', time.gmtime(elapsed))}")
 
-        # === Compute and save threshold on validation set ===
+        # Compute and save threshold on validation set
         errors_val = []
         for x_val, mask_val in val_dataset:
             x_val = tf.cast(x_val, tf.float32)
