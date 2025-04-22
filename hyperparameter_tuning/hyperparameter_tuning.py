@@ -56,7 +56,6 @@ def objective(trial):
             params["activation_decoder"] = trial.suggest_categorical("activation_decoder", params["activation_decoder"])
 
         learning_rate = trial.suggest_float("learning_rate", CONFIG["LEARNING_RATE_MIN"], CONFIG["LEARNING_RATE_MAX"], log=True)
-        #_ = trial.suggest_int("num_samples", CONFIG["NUM_SAMPLES_MIN"], CONFIG["NUM_SAMPLES_MAX"], log=True)  # Not used anymore
     else:
         # Use defaults if Optuna is disabled
         if model_type == "vae":
@@ -64,17 +63,17 @@ def objective(trial):
         elif model_type == "cnn":
             train_dataset = train_dataset.map(lambda x, m: x)
             val_dataset = val_dataset.map(lambda x, m: x)
-            params["encoder_filters"] = params["encoder_filters"][0]
-            params["kernel_sizes"] = params["kernel_sizes"][0]
-            params["activation_encoder"] = params["activation_encoder"][0]
-            params["activation_decoder"] = params["activation_decoder"][0]
+            params["encoder_filters"] = params["encoder_filters"]
+            params["kernel_sizes"] = params["kernel_sizes"]
+            params["activation_encoder"] = params["activation_encoder"]
+            params["activation_decoder"] = params["activation_decoder"]
         elif model_type == "rnn":
             train_dataset = train_dataset.map(lambda x, m: x)
             val_dataset = val_dataset.map(lambda x, m: x)
-            params["encoder_layers"] = params["encoder_layers"][0]
-            params["rnn_type"] = params["rnn_type"][0]
-            params["activation_encoder"] = params["activation_encoder"][0]
-            params["activation_decoder"] = params["activation_decoder"][0]
+            params["encoder_layers"] = params["encoder_layers"]
+            params["rnn_type"] = params["rnn_type"]
+            params["activation_encoder"] = params["activation_encoder"]
+            params["activation_decoder"] = params["activation_decoder"]
 
         learning_rate = CONFIG["LEARNING_RATE"]
 

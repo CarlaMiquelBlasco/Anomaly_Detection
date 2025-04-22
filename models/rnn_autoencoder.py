@@ -9,11 +9,11 @@ class RNNAutoencoder:
     @staticmethod
     def build_model(params):
         input_shape = params["input_shape"]
-        rnn_type = params.get("rnn_type", "LSTM")
-        encoder_layers = params["encoder_layers"]
+        rnn_type = params["rnn_type"][0]
+        encoder_layers = params["encoder_layers"][0]
         latent_dim = params["latent_dim"]
-        activation_encoder = params["activation_encoder"]
-        activation_decoder = params["activation_decoder"]
+        activation_encoder = params["activation_encoder"][0]
+        activation_decoder = params["activation_decoder"][0]
 
         input_layer = Input(shape=input_shape)
 

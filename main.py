@@ -67,16 +67,17 @@ def main():
     CONFIG["MODEL_TYPE"] = args.model_type
     CONFIG["EPOCHS"] = args.epochs
     CONFIG["BATCH_SIZE"] = args.batch_size
-    CONFIG["THRESHOLD_PERCENTILE"] = args.threshold_percentile # to classify as bckg or anomaly: threshold_percentile% of the events with less error are considered background
+    CONFIG["THRESHOLD_PERCENTILE"] = args.threshold_percentile
     CONFIG["USE_OPTUNA"] = args.use_optuna
     CONFIG["OPTUNA_TRIALS"] = args.optuna_trials
 
     print("\n=== LHC Anomaly Detection Pipeline ===")
     print(f"Mode: {args.mode}")
-    print(f"Dataset: {CONFIG['DATA_PATH']}")
-    print(f"Model type: {CONFIG['MODEL_TYPE']}")
-    print(f"Epochs: {CONFIG['EPOCHS']}, Batch size: {CONFIG['BATCH_SIZE']}")
-    print(f"Anomaly threshold percentile: {CONFIG['THRESHOLD_PERCENTILE']}")
+    if args.mode == "train":
+        print(f"Dataset: {CONFIG['DATA_PATH']}")
+        print(f"Model type: {CONFIG['MODEL_TYPE']}")
+        print(f"Epochs: {CONFIG['EPOCHS']}, Batch size: {CONFIG['BATCH_SIZE']}")
+        print(f"Anomaly threshold percentile: {CONFIG['THRESHOLD_PERCENTILE']}")
     print("--------------------------------------")
 
     if args.mode == "train":
@@ -121,7 +122,6 @@ def main():
         # Plot results
         model = tester.get_model()
         run_all_plots(errors_test, threshold_test, labels, history, args.plots, test_dataset, model)
-        #plot_results(errors_test, threshold_test, labels, history)
 
 
 if __name__ == "__main__":

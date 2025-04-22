@@ -1,0 +1,38 @@
+{
+  "model_config": {
+    "MODEL_TYPE": "vae",
+    "MODE": "train",
+    "PATIENCE": 5,
+    "TEST_DATA_RATE": 0.02,
+    "TEST_ANOMALY_RATIO": 0.1,
+    "VALIDATION_DATA_RATE": 0.02,
+    "USE_OPTUNA": false,
+    "OPTUNA_TRIALS": 1,
+    "EPOCHS": 25,
+    "BATCH_SIZE": 128,
+    "LEARNING_RATE": 0.001,
+    "LEARNING_RATE_MIN": 1e-5,
+    "LEARNING_RATE_MAX": 0.01,
+    "CHECKPOINT_DIR": "./saved_models/checkpoints/",
+    "FINAL_MODEL_DIR": "./saved_models/final/",
+    "MODEL_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/project_carla/VAE_Anomalie/saved_models/16042025",
+    "THRESHOLD_PERCENTILE": 95,
+    "FEATURE_WEIGHTS": [1.0, 1.0, 1.0],
+    "PLOTS": ["error_dist", "event_comparison", "latent", "density", "recon_vs_orig"],
+    "LATENT_PLOT_MAX_POINTS": 3000,
+    "LATENT_PLOT_METHOD": "tsne"
+  },
+  "autoencoder_params": {
+    "input_shape": [700, 3],
+    "encoder_layers": [512, 256, 128],
+    "latent_dim": 32,
+    "decoder_layers": [128, 256, 512],
+    "activation": "relu",
+    "beta": 0.0001,
+    "dropout_rate": 0.1,
+    "l2_strength": 1e-5,
+    "encoder_type": "Conv1D layers with BatchNormalization and Dropout (OPTION 3)",
+    "decoder_type": "Dense layers with BatchNormalization (no Dropout)"
+  },
+  "notes": "This model uses OPTION 1 in the encoder: Each encoder layer is a 1D convolution with kernel size = 1, followed by optional BatchNormalization and Dropout."
+}

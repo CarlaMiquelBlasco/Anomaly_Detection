@@ -130,7 +130,6 @@ def plot_results(errors, threshold, labels, history):
      background_errors = background_errors.flatten()
      anomaly_errors = anomaly_errors.flatten()
 
-     # Fix: Provide `color` as a list
      plt.figure(figsize=(10, 5))
      plt.hist([background_errors, anomaly_errors], bins=50, alpha=0.6, color=["blue", "red"], label=["Background", "Anomalies"])
      plt.axvline(threshold, color='black', linestyle='dashed', linewidth=1, label="Threshold")
@@ -174,7 +173,7 @@ def plot_results(errors, threshold, labels, history):
      plt.legend()
      plt.show()
 
-    # plot Loss history
+    # plot Loss history ig history is available
      try:
          plt.plot(history["loss"], label="Train Loss")
          plt.plot(history["val_loss"], label="Val Loss")
@@ -313,7 +312,6 @@ def original_vs_reconstructed(test_dataset, model):
     mask_anomaly = mask_np[anomaly_idx]
 
     # === Reconstruct ===
-    # === Reconstruct ===
     def reconstruct(input_data, input_mask):
         input_data = tf.expand_dims(input_data, 0)
         input_mask = tf.expand_dims(input_mask, 0)
@@ -324,10 +322,6 @@ def original_vs_reconstructed(test_dataset, model):
 
     reconstructed_bg = reconstruct(original_bg, mask_bg)
     reconstructed_anomaly = reconstruct(original_anomaly, mask_anomaly)
-
-    #reconstructed_bg = model((tf.expand_dims(original_bg, 0), tf.expand_dims(mask_bg, 0)), training=False).numpy()[0]
-    #reconstructed_anomaly = \
-    #model((tf.expand_dims(original_anomaly, 0), tf.expand_dims(mask_anomaly, 0)), training=False).numpy()[0]
 
     # === Plotting ===
     def plot_event(original, reconstructed, mask, title):

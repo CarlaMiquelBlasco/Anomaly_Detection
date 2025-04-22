@@ -45,7 +45,7 @@ class DataLoader:
         print("[INFO] Preparing dataset and fitting scalers...")
         test_rate = CONFIG["TEST_DATA_RATE"]
         val_rate = CONFIG["VALIDATION_DATA_RATE"]
-        anomaly_ratio = CONFIG["TEST_ANOMALY_RATIO"] # percentage of anomalies in the test dataset
+        anomaly_ratio = CONFIG["TEST_ANOMALY_RATIO"]
 
         signal_indices = []
         background_indices = []
@@ -80,7 +80,7 @@ class DataLoader:
         self.val_indices = background_remaining[:val_size]
         self.train_indices = background_remaining[val_size:]
 
-        if CONFIG["MODE"] == "train":
+        if CONFIG["MODE"] == "trainn":
             all_particles = []
 
             with h5py.File(self.data_path, "r") as f:
@@ -101,9 +101,9 @@ class DataLoader:
             self.save_scalers(CONFIG["MODEL_PATH"])
         else:
             #model aux only used when we wanted to train using fitted scalers from previous trials so we don't have to wait
-            #model_aux = "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/project_carla/VAE_Anomalie/saved_models/13042025"
-            #self.load_scalers(model_aux)
-            self.load_scalers(CONFIG["MODEL_PATH"])
+            model_aux = "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/project_carla/VAE_Anomalie/saved_models/vae/13042025"
+            self.load_scalers(model_aux)
+            #self.load_scalers(CONFIG["MODEL_PATH"])
 
         print("\n[INFO] Fitted scaler stats:")
         for i, name in enumerate(['pT', 'η', 'φ']):
@@ -119,7 +119,7 @@ class DataLoader:
     def _transform_event_with_mask(self, row_flat):
         row = row_flat.reshape(700, 3)
         mask = (np.any(row != 0, axis=-1)).astype(np.float32).reshape(700, 1) # Generates a truth mask where active particles are 1.0, and zero-padded rows are 0.0
-        scaled = self._apply_scalers(row.copy()) # Applies min-max scaling per feature (pT, η, φ).
+        scaled = self._apply_scalers(row.copy()) # Applies scaling per feature (pT, η, φ).
         return scaled.astype(np.float32), mask
 
     def get_lazy_train_dataset(self):

@@ -36,7 +36,7 @@ def get_model_filename():
 
     epochs = CONFIG["EPOCHS"]
     lr = CONFIG["LEARNING_RATE"]
-    timestamp = "07042025" #datetime.datetime.now().strftime("%Y%m%d-%H%M")
+    timestamp = "2025" # or datetime.datetime.now().strftime("%Y%m%d-%H%M")
 
     filename = f"{model_type}_{details}_epochs-{epochs}_lr-{lr}_{timestamp}"
 
@@ -131,15 +131,3 @@ def vae_loss(inputs, outputs, z_mean, z_log_var, beta, mask=None, return_only_er
 
     total_loss = reconstruction_loss + beta * kl_loss
     return total_loss, reconstruction_loss, kl_loss
-
-'''
-def lr_log(epoch, lr):
-    """
-    Logs the learning rate at the start of each epoch.
-    Useful for debugging learning rate schedules.
-    """
-    new_lr = lr * 0.95  # Decay by 5% every epoch
-    print(f"[DEBUG] Epoch {epoch}: LR decayed from {lr:.6f} → {new_lr:.6f}")
-    return new_lr
-
-'''

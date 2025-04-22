@@ -34,30 +34,3 @@ def run_all_plots(errors, threshold, labels, history, plot_types, test_dataset, 
         print("[PLOT] Plotting original vs reconstructed events...")
         # === Get batch of data ===
         original_vs_reconstructed(test_dataset, autoencoder)
-        '''
-        for (batch, mask), labels in test_dataset:
-            batch_np = batch.numpy()
-            mask_np = mask.numpy()
-            labels_np = labels.numpy()
-            break  # Just grab the first batch
-
-        # === Select background and anomaly indices ===
-        bg_idx = np.where(labels_np == 0)[0][0]
-        anomaly_idx = np.where(labels_np == 1)[0][0]
-
-        original_bg = batch_np[bg_idx]
-        mask_bg = mask_np[bg_idx]
-        original_anomaly = batch_np[anomaly_idx]
-        mask_anomaly = mask_np[anomaly_idx]
-
-        # === Reconstruct ===
-        reconstructed_bg = autoencoder((tf.expand_dims(original_bg, 0), tf.expand_dims(mask_bg, 0)), training=False).numpy()[0]
-        reconstructed_anomaly = autoencoder((tf.expand_dims(original_anomaly, 0), tf.expand_dims(mask_anomaly, 0)), training=False).numpy()[0]
-
-        plot_event(original_bg, reconstructed_bg, mask_bg, "Background Event: Original vs Reconstructed")
-        plot_event(original_anomaly, reconstructed_anomaly, mask_anomaly, "Anomaly Event: Original vs Reconstructed")
-
-    if not plot_types:
-        print("[INFO] No plots selected. Use --plots to specify which to generate.")
-    '''
-
