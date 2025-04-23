@@ -1,8 +1,8 @@
 CONFIG = {
     "DATA_PATH":"/home/cblasco/project_dat255_DL/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",
     #"DATA_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5", #/Users/carlamiquelblasco/Desktop/MASTER BERGEN v2/Q2/DAT255-DL/Project/DAT255Project_LHC_Anomaly_detection/data/events_anomalydetection.h5",  # Path to dataset
-    "MODEL_TYPE": "cnn",  # Change to "cnn" or "rnn" to try different models
-    "MODE": "test",
+    "MODEL_TYPE": "rnn",  # Change to "cnn" or "rnn" to try different models
+    "MODE": "train",
     "PATIENCE": 4,
     "TEST_DATA_RATE": 0.02, # % of total data for test
     "TEST_ANOMALY_RATIO": 0.1,  # % anomalies in the test set
@@ -16,7 +16,7 @@ CONFIG = {
     "LEARNING_RATE_MAX": 0.01,  # Maximum learning rate for Optuna
     "CHECKPOINT_DIR": "./saved_models/checkpoints/",
     "FINAL_MODEL_DIR": "./saved_models/final/",
-    "MODEL_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/project_carla/VAE_Anomalie/saved_models/cnn/23042025",
+    "MODEL_PATH": "/Users/carlamiquelblasco/Desktop/MASTER SE/Q2/DAT255-DL/project_carla/VAE_Anomalie/saved_models/rnn/22042025",
     "THRESHOLD_PERCENTILE": 95,  # Used for anomaly detection classification. To classify as bckg or anomaly: threshold_percentile % of the events with less error are considered background
     "FEATURE_WEIGHTS":[3.0, 1.0, 1.0], # Feature-wise weights for computing the loss: [pT, eta, phi]
 

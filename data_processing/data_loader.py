@@ -80,7 +80,7 @@ class DataLoader:
         self.val_indices = background_remaining[:val_size]
         self.train_indices = background_remaining[val_size:]
 
-        if CONFIG["MODE"] == "trainn":
+        if CONFIG["MODE"] == "train":
             all_particles = []
 
             with h5py.File(self.data_path, "r") as f:

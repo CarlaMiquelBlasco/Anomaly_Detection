@@ -1,0 +1,27 @@
+{
+  "model_config": {
+    "MODEL_TYPE": "cnn",
+    "MODE": "train",
+    "PATIENCE": 4,
+    "TEST_DATA_RATE": 0.02,
+    "TEST_ANOMALY_RATIO": 0.1,
+    "VALIDATION_DATA_RATE": 0.02,
+    "USE_OPTUNA": false,
+    "EPOCHS": 4,
+    "BATCH_SIZE": 128,
+    "LEARNING_RATE": 0.001,
+    "MODEL_PATH": "./saved_models/cnn/23042025",
+    "THRESHOLD_PERCENTILE": 95,
+    "PLOTS": ["error_dist", "event_comparison", "latent", "density", "recon_vs_orig"],
+  },
+  "autoencoder_params": {
+    "input_shape": [700, 3, 1],
+    "encoder_filters": [64],
+    "kernel_sizes": [[5, 3]],
+    "latent_dim": 32,
+    "activation_encoder": "relu",
+    "activation_decoder": "relu"
+  },
+  "notes": "CNN Autoencoder with 3 Conv2D layers for encoding using filters [64, 32, 16] and corresponding kernel sizes. Encoding is followed by GlobalAveragePooling2D and a Dense layer to produce a latent vector of size 32. The decoder uses a Dense + Reshape + Conv2DTranspose pipeline to reconstruct the original shape (700, 3, 1).",
+  "notes2": "No history.pkl provided due to time and resources limitation."
+}

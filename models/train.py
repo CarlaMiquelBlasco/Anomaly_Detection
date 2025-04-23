@@ -115,11 +115,11 @@ class AutoencoderTrainer:
 
         # Compute and save threshold on validation set
         errors_val = []
-        for x_val, mask_val in wrapped_val_dataset:
-            x_val = tf.cast(x_val, tf.float32)
-            mask_val = tf.cast(mask_val, tf.float32)
+        if self.model_type=="vae":
+            for x_val, mask_val in val_dataset:
+                x_val = tf.cast(x_val, tf.float32)
+                mask_val = tf.cast(mask_val, tf.float32)
 
-            if self.model_type == "vae":
                 z_mean, z_log_var, _ = self.model.encoder(x_val, training=False)
                 reconstructed = self.model.decoder(z_mean, training=False)
 
@@ -128,19 +128,23 @@ class AutoencoderTrainer:
                     x_val, reconstructed, z_mean, z_log_var,
                     beta=self.model.beta, mask=mask_val, return_only_errors=True
                 )
+                errors_val.append(per_event_errors.numpy())
 
-            elif self.model_type == "cnn":
+        elif self.model_type == "cnn":
+            for x_val, x2_val in wrapped_val_dataset:
                 x_val_cnn = tf.expand_dims(x_val, axis=-1)  # CNN expects channels
                 reconstructed = self.model(x_val_cnn, training=False)
                 squared_error = tf.square(x_val_cnn - reconstructed)
                 per_event_errors = tf.reduce_mean(squared_error, axis=(1, 2, 3))
+                errors_val.append(per_event_errors.numpy())
 
-            else:  # default case: standard autoencoder (or RNN, if applicable)
+        else:
+            for x_val, x2_val in wrapped_val_dataset:
                 reconstructed = self.model(x_val, training=False)
                 squared_error = tf.square(x_val - reconstructed)
                 per_event_errors = tf.reduce_mean(squared_error, axis=(1, 2))
 
-            errors_val.append(per_event_errors.numpy())
+                errors_val.append(per_event_errors.numpy())
 
         errors_val = np.concatenate(errors_val)
         threshold = np.percentile(errors_val, CONFIG["THRESHOLD_PERCENTILE"])
