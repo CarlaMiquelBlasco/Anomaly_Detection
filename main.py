@@ -29,7 +29,7 @@ def parse_arguments():
     parser.add_argument("--data_path", type=str, default=CONFIG["DATA_PATH"],
                         help="Path to the dataset (HDF5 file)")
 
-    parser.add_argument("--model_type", type=str, choices=["mlp", "cnn", "rnn"], default=CONFIG["MODEL_TYPE"],
+    parser.add_argument("--model_type", type=str, choices=["vae", "cnn", "rnn"], default=CONFIG["MODEL_TYPE"],
                         help="Type of autoencoder model to use")
 
     parser.add_argument("--epochs", type=int, default=CONFIG["EPOCHS"],
